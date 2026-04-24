@@ -135,8 +135,7 @@ All campaign data is simulated for the purpose of this internship project, model
 ---
 
 ## 👤 Author
-
-**[Your Name]**
+[Anirban Ghosal]
 Digital Marketing Intern – SkillInfyTech IT Solutions
 📅 April 2026
 
