@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FreshBrew Coffee Co. – Campaign Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-color: #0f172a;
+  --card-bg: rgba(30, 41, 59, 0.7);
+  --card-border: rgba(255, 255, 255, 0.1);
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --accent-ig: #8b5cf6;
+  --accent-li: #3b82f6;
+  --accent-org: #10b981;
+  --accent-paid: #f43f5e;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Inter', sans-serif;
+  background: radial-gradient(circle at top right, #1e1b4b, #0f172a);
+  color: var(--text-main);
+  min-height: 100vh;
+}
+.db-wrap { padding: 24px; max-width: 1200px; margin: 0 auto; }
+.topbar {
+  background: rgba(255,255,255,0.03);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: 20px 28px;
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+}
+.topbar-left h2 { font-size: 22px; font-weight: 700; background: linear-gradient(to right, #60a5fa, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.topbar-left p { font-size: 13px; color: var(--text-muted); margin-top: 4px; font-weight: 500; }
+.topbar-right { font-size: 12px; font-weight: 600; background: rgba(255,255,255,0.1); padding: 8px 16px; border-radius: 20px; color: #cbd5e1; }
+
+.slicers {
+  display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 24px;
+  background: var(--card-bg); backdrop-filter: blur(12px); border: 1px solid var(--card-border);
+  border-radius: 16px; padding: 16px 24px; align-items: center;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+}
+.slicer-label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-right: 4px; }
+.chip-group { display: flex; gap: 8px; flex-wrap: wrap; }
+.chip {
+  font-size: 13px; font-weight: 500; padding: 6px 16px; border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: #cbd5e1;
+  cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.chip:hover { border-color: #60a5fa; color: #fff; transform: translateY(-1px); }
+.chip.active { background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: #fff; border-color: transparent; box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3); }
+.slicer-sep { width: 1px; background: rgba(255,255,255,0.1); height: 24px; margin: 0 8px; }
+.reset-btn {
+  font-size: 13px; font-weight: 600; padding: 6px 16px; border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.2); background: transparent; color: #f8fafc;
+  cursor: pointer; transition: all 0.2s; font-family: 'Inter', sans-serif;
+}
+.reset-btn:hover { background: rgba(255,255,255,0.1); transform: translateY(-1px); }
+
+.kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 24px; }
+.kpi {
+  background: var(--card-bg); backdrop-filter: blur(12px); border: 1px solid var(--card-border);
+  border-radius: 16px; padding: 20px 24px; position: relative; overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15); transition: transform 0.2s;
+}
+.kpi:hover { transform: translateY(-4px); }
+.kpi::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px; }
+.kpi:nth-child(1)::before { background: #3b82f6; box-shadow: 0 0 10px #3b82f6; }
+.kpi:nth-child(2)::before { background: #8b5cf6; box-shadow: 0 0 10px #8b5cf6; }
+.kpi:nth-child(3)::before { background: #10b981; box-shadow: 0 0 10px #10b981; }
+.kpi:nth-child(4)::before { background: #f59e0b; box-shadow: 0 0 10px #f59e0b; }
+.kpi .lbl { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; font-weight: 600; }
+.kpi .val { font-size: 32px; font-weight: 700; color: #fff; margin-bottom: 8px; }
+.kpi .chg { font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 12px; display: inline-block; background: rgba(255,255,255,0.1); color: #cbd5e1; }
+
+.charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+.chart-card {
+  background: var(--card-bg); backdrop-filter: blur(12px); border: 1px solid var(--card-border);
+  border-radius: 16px; padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); transition: transform 0.2s;
+}
+.chart-card:hover { transform: translateY(-2px); }
+.chart-title { font-size: 16px; font-weight: 600; color: #fff; margin-bottom: 4px; }
+.chart-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; }
+
+.table-card {
+  background: var(--card-bg); backdrop-filter: blur(12px); border: 1px solid var(--card-border);
+  border-radius: 16px; padding: 24px; margin-bottom: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  overflow-x: auto;
+}
+.tbl { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
+.tbl th { padding: 12px 16px; font-size: 12px; font-weight: 600; color: var(--text-muted); border-bottom: 1px solid var(--card-border); text-transform: uppercase; letter-spacing: 0.5px; }
+.tbl td { padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #e2e8f0; }
+.tbl tr:last-child td { border-bottom: none; }
+.tbl tr:hover td { background: rgba(255,255,255,0.03); }
+
+.badge { font-size: 11px; padding: 4px 10px; border-radius: 12px; font-weight: 600; letter-spacing: 0.3px; }
+.b-ig { background: rgba(139, 92, 246, 0.2); color: #c4b5fd; border: 1px solid rgba(139, 92, 246, 0.3); }
+.b-li { background: rgba(59, 130, 246, 0.2); color: #93c5fd; border: 1px solid rgba(59, 130, 246, 0.3); }
+.b-org { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.3); }
+.b-paid { background: rgba(244, 63, 94, 0.2); color: #fda4af; border: 1px solid rgba(244, 63, 94, 0.3); }
+
+.legend { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 16px; font-size: 13px; color: #cbd5e1; font-weight: 500; }
+.legend span { display: flex; align-items: center; gap: 8px; }
+.leg-dot { width: 12px; height: 12px; border-radius: 3px; display: inline-block; box-shadow: 0 0 8px currentColor; }
+
+.no-data { text-align: center; padding: 40px; color: var(--text-muted); font-size: 14px; }
+.footer { text-align: center; font-size: 13px; color: var(--text-muted); padding: 24px 0; margin-top: 20px; border-top: 1px solid var(--card-border); }
+
+@media(max-width: 900px){
+  .kpi-grid { grid-template-columns: 1fr 1fr; }
+  .charts-row { grid-template-columns: 1fr; }
+}
+@media(max-width: 500px){
+  .kpi-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="db-wrap">
+
+<div class="topbar">
+  <div class="topbar-left">
+    <h2>✨ Social Media Campaign Dashboard</h2>
+    <p>FreshBrew Coffee Co. &nbsp;|&nbsp; Brew Your Day – Spring 2026 &nbsp;|&nbsp; Instagram + LinkedIn</p>
+  </div>
+  <div class="topbar-right">April 1–30, 2026</div>
+</div>
+
+<div class="slicers">
+  <span class="slicer-label">Platform</span>
+  <div class="chip-group" id="platform-chips">
+    <div class="chip active" data-val="all">All</div>
+    <div class="chip" data-val="instagram">Instagram</div>
+    <div class="chip" data-val="linkedin">LinkedIn</div>
+  </div>
+  <div class="slicer-sep"></div>
+  <span class="slicer-label">Week</span>
+  <div class="chip-group" id="week-chips">
+    <div class="chip active" data-val="all">All</div>
+    <div class="chip" data-val="1">Week 1</div>
+    <div class="chip" data-val="2">Week 2</div>
+    <div class="chip" data-val="3">Week 3</div>
+    <div class="chip" data-val="4">Week 4</div>
+  </div>
+  <div class="slicer-sep"></div>
+  <span class="slicer-label">Traffic</span>
+  <div class="chip-group" id="traffic-chips">
+    <div class="chip active" data-val="all">All</div>
+    <div class="chip" data-val="organic">Organic</div>
+    <div class="chip" data-val="paid">Paid</div>
+  </div>
+  <div class="slicer-sep"></div>
+  <button class="reset-btn" id="reset-btn">&#8635; Reset Filters</button>
+</div>
+
+<div class="kpi-grid">
+  <div class="kpi">
+    <div class="lbl">Total Reach</div>
+    <div class="val" id="kpi-reach">—</div>
+    <div class="chg" id="kpi-reach-chg">Unique Users</div>
+  </div>
+  <div class="kpi">
+    <div class="lbl">Total Impressions</div>
+    <div class="val" id="kpi-imp">—</div>
+    <div class="chg" id="kpi-imp-chg">Total Views</div>
+  </div>
+  <div class="kpi">
+    <div class="lbl">Total Engagement</div>
+    <div class="val" id="kpi-eng">—</div>
+    <div class="chg" id="kpi-eng-rate">—</div>
+  </div>
+  <div class="kpi">
+    <div class="lbl">Website Clicks</div>
+    <div class="val" id="kpi-clicks">—</div>
+    <div class="chg" id="kpi-clicks-chg">Link Clicks</div>
+  </div>
+</div>
+
+<div class="charts-row">
+  <div class="chart-card">
+    <div class="chart-title">Reach Growth Over Time</div>
+    <div class="chart-sub">Instagram &amp; LinkedIn weekly reach trend</div>
+    <div style="position:relative;height:240px"><canvas id="c-reach"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">Engagement Velocity</div>
+    <div class="chart-sub">Likes, comments, shares per week</div>
+    <div style="position:relative;height:240px"><canvas id="c-eng"></canvas></div>
+  </div>
+</div>
+
+<div class="charts-row">
+  <div class="chart-card">
+    <div class="chart-title">Traffic Source: Organic vs Paid</div>
+    <div class="legend" style="color: #10b981;">
+      <span><span class="leg-dot" style="background:#10b981"></span>Organic</span>
+      <span style="color: #f43f5e;"><span class="leg-dot" style="background:#f43f5e"></span>Paid</span>
+    </div>
+    <div style="position:relative;height:220px"><canvas id="c-ovp"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">Content Format Performance</div>
+    <div class="legend" style="color: #8b5cf6;">
+      <span><span class="leg-dot" style="background:#8b5cf6"></span>Instagram</span>
+      <span style="color: #3b82f6;"><span class="leg-dot" style="background:#3b82f6"></span>LinkedIn</span>
+    </div>
+    <div style="position:relative;height:220px"><canvas id="c-content"></canvas></div>
+  </div>
+</div>
+
+<div class="table-card">
+  <div class="chart-title" style="margin-bottom:16px">Weekly Performance Breakdown</div>
+  <table class="tbl" id="weekly-table">
+    <thead><tr>
+      <th>Week</th><th>Platform</th><th>Reach</th><th>Impressions</th>
+      <th>Engagement</th><th>Clicks</th><th>Eng. Rate</th><th>Traffic</th>
+    </tr></thead>
+    <tbody id="weekly-tbody"></tbody>
+  </table>
+  <div class="no-data" id="no-data" style="display:none">No data matches the selected filters.</div>
+</div>
+
+<div class="table-card">
+  <div class="chart-title" style="margin-bottom:16px">Top Performing Posts</div>
+  <table class="tbl">
+    <thead><tr><th>Rank</th><th>Post Description</th><th>Platform</th><th>Engagement</th><th>Clicks</th><th>Content Type</th></tr></thead>
+    <tbody id="top-tbody"></tbody>
+  </table>
+</div>
+
+<div class="footer">SkillInfyTech IT Solutions &nbsp;|&nbsp; Digital Marketing Internship – Project 1 &nbsp;|&nbsp; Dashboard Redesigned</div>
+</div>
+
+<script>
+Chart.defaults.color = '#94a3b8';
+Chart.defaults.font.family = "'Inter', sans-serif";
+
+const RAW=[
+  {week:1,dates:"Apr 1–7",  platform:"instagram",reach:4200, imp:7800, eng:320,clicks:95, traffic:"organic"},
+  {week:1,dates:"Apr 1–7",  platform:"instagram",reach:0,    imp:0,    eng:0,  clicks:58, traffic:"paid"},
+  {week:2,dates:"Apr 8–14", platform:"instagram",reach:6500, imp:11200,eng:510,clicks:152,traffic:"organic"},
+  {week:2,dates:"Apr 8–14", platform:"instagram",reach:0,    imp:0,    eng:0,  clicks:92, traffic:"paid"},
+  {week:3,dates:"Apr 15–21",platform:"instagram",reach:9100, imp:15600,eng:730,clicks:231,traffic:"organic"},
+  {week:3,dates:"Apr 15–21",platform:"instagram",reach:0,    imp:0,    eng:0,  clicks:148,traffic:"paid"},
+  {week:4,dates:"Apr 22–30",platform:"instagram",reach:12400,imp:20300,eng:960,clicks:318,traffic:"organic"},
+  {week:4,dates:"Apr 22–30",platform:"instagram",reach:0,    imp:0,    eng:0,  clicks:204,traffic:"paid"},
+  {week:1,dates:"Apr 1–7",  platform:"linkedin", reach:900,  imp:1800, eng:54, clicks:95, traffic:"organic"},
+  {week:2,dates:"Apr 8–14", platform:"linkedin", reach:1300, imp:2600, eng:85, clicks:148,traffic:"organic"},
+  {week:3,dates:"Apr 15–21",platform:"linkedin", reach:1700, imp:3400, eng:112,clicks:210,traffic:"organic"},
+  {week:4,dates:"Apr 22–30",platform:"linkedin", reach:2100, imp:4200, eng:146,clicks:287,traffic:"organic"},
+];
+const TOP_POSTS=[
+  {rank:1,post:"Morning Ritual – Barista Routine Reel",platform:"instagram",eng:461,clicks:180,type:"Organic Video"},
+  {rank:2,post:"5 Coffee Myths Debunked – Carousel",   platform:"instagram",eng:401,clicks:95, type:"Organic Carousel"},
+  {rank:3,post:"Spring Launch Promo 20% Off – Ad",     platform:"instagram",eng:580,clicks:320,type:"Paid Image Ad"},
+  {rank:4,post:"The Art of Slow Coffee – Article",     platform:"linkedin", eng:146,clicks:210,type:"Organic Article"},
+  {rank:5,post:"Behind the Beans – Supplier Story",    platform:"linkedin", eng:110,clicks:148,type:"Organic Post"},
+];
+
+let selPlatform="all",selWeek="all",selTraffic="all";
+function fmt(n){return n>=1000?(Math.round(n/100)/10)+"k":Math.round(n).toLocaleString()}
+function sum(arr,key){return arr.reduce((a,b)=>a+(b[key]||0),0)}
+function filtered(){return RAW.filter(r=>(selPlatform==="all"||r.platform===selPlatform)&&(selWeek==="all"||r.week===+selWeek)&&(selTraffic==="all"||r.traffic===selTraffic))}
+function filteredTop(){return TOP_POSTS.filter(r=>selPlatform==="all"||r.platform===selPlatform)}
+function getWeeks(){return selWeek==="all"?[1,2,3,4]:[+selWeek]}
+
+const charts={};
+function makeChart(id,type,data,opts){
+  if(charts[id])charts[id].destroy();
+  charts[id]=new Chart(document.getElementById("c-"+id),{type,data,options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},...opts}});
+}
+
+function update(){
+  const f=filtered();
+  const tr=sum(f,"reach"),ti=sum(f,"imp"),te=sum(f,"eng"),tc=sum(f,"clicks");
+  const er=tr>0?(te/tr*100):0;
+  
+  document.getElementById("kpi-reach").textContent=fmt(tr);
+  document.getElementById("kpi-imp").textContent=fmt(ti);
+  document.getElementById("kpi-eng").textContent=fmt(te);
+  document.getElementById("kpi-eng-rate").textContent=er.toFixed(2)+"% avg. rate";
+  document.getElementById("kpi-clicks").textContent=fmt(tc);
+
+  const weeks=getWeeks();
+  const wkLabels=weeks.map(w=>"Week "+w);
+  const showIG=selPlatform!=="linkedin";
+  const showLI=selPlatform!=="instagram";
+  const scaleOpts={
+    y:{beginAtZero:true,grid:{color:"rgba(255,255,255,0.05)"}, border:{display:false}},
+    x:{grid:{display:false}, border:{display:false}}
+  };
+
+  const igR=weeks.map(w=>sum(RAW.filter(r=>r.week===w&&r.platform==="instagram"&&(selTraffic==="all"||r.traffic===selTraffic)),"reach"));
+  const liR=weeks.map(w=>sum(RAW.filter(r=>r.week===w&&r.platform==="linkedin"&&(selTraffic==="all"||r.traffic===selTraffic)),"reach"));
+  const rDS=[];
+  if(showIG)rDS.push({label:"Instagram",data:igR,backgroundColor:"#8b5cf6",borderRadius:4});
+  if(showLI)rDS.push({label:"LinkedIn",data:liR,backgroundColor:"#3b82f6",borderRadius:4});
+  makeChart("reach","bar",{labels:wkLabels,datasets:rDS},{scales:scaleOpts});
+
+  const igE=weeks.map(w=>sum(RAW.filter(r=>r.week===w&&r.platform==="instagram"&&(selTraffic==="all"||r.traffic===selTraffic)),"eng"));
+  const liE=weeks.map(w=>sum(RAW.filter(r=>r.week===w&&r.platform==="linkedin"&&(selTraffic==="all"||r.traffic===selTraffic)),"eng"));
+  const eDS=[];
+  if(showIG)eDS.push({label:"Instagram",data:igE,borderColor:"#8b5cf6",backgroundColor:"rgba(139, 92, 246, 0.15)",fill:true,tension:0.4,pointRadius:4,pointBackgroundColor:"#8b5cf6", pointBorderWidth:2, pointBorderColor:"#1e293b"});
+  if(showLI)eDS.push({label:"LinkedIn",data:liE,borderColor:"#3b82f6",backgroundColor:"rgba(59, 130, 246, 0.15)",fill:true,tension:0.4,pointRadius:4,pointBackgroundColor:"#3b82f6", pointBorderWidth:2, pointBorderColor:"#1e293b"});
+  makeChart("eng","line",{labels:wkLabels,datasets:eDS},{scales:scaleOpts});
+
+  const orgR=weeks.map(w=>sum(RAW.filter(r=>r.week===w&&(selPlatform==="all"||r.platform===selPlatform)&&r.traffic==="organic"),"reach"));
+  const paidR=weeks.map(w=>sum(RAW.filter(r=>r.week===w&&(selPlatform==="all"||r.platform===selPlatform)&&r.traffic==="paid"),"reach"));
+  const ovDS=[];
+  if(selTraffic!=="paid")ovDS.push({label:"Organic",data:orgR,backgroundColor:"#10b981",borderRadius:4});
+  if(selTraffic!=="organic")ovDS.push({label:"Paid",data:paidR,backgroundColor:"#f43f5e",borderRadius:4});
+  makeChart("ovp","bar",{labels:wkLabels,datasets:ovDS},{scales:scaleOpts});
+
+  const cDS=[];
+  if(showIG)cDS.push({label:"Instagram",data:[8,6,12,4],backgroundColor:"#8b5cf6",borderRadius:4});
+  if(showLI)cDS.push({label:"LinkedIn",data:[5,2,0,3],backgroundColor:"#3b82f6",borderRadius:4});
+  makeChart("content","bar",{labels:["Images","Video/Reels","Stories","Carousel"],datasets:cDS},{scales:scaleOpts});
+
+  const tbody=document.getElementById("weekly-tbody");
+  const seen=new Set();const rows=[];
+  f.forEach(r=>{const k=r.week+r.platform+r.traffic;if(!seen.has(k)){seen.add(k);rows.push(r);}});
+  document.getElementById("no-data").style.display=rows.length?"none":"block";
+  tbody.innerHTML=rows.map(r=>{
+    const er=r.reach>0?(r.eng/r.reach*100):0;
+    return`<tr><td><div style="font-weight:600">Week ${r.week}</div><small style="color:#64748b">${r.dates}</small></td>
+    <td>${r.platform==="instagram"?'<span class="badge b-ig">Instagram</span>':'<span class="badge b-li">LinkedIn</span>'}</td>
+    <td>${fmt(r.reach)}</td><td>${fmt(r.imp)}</td><td>${fmt(r.eng)}</td><td>${fmt(r.clicks)}</td>
+    <td style="color:#e2e8f0;font-weight:500">${er.toFixed(1)}%</td>
+    <td>${r.traffic==="paid"?'<span class="badge b-paid">Paid</span>':'<span class="badge b-org">Organic</span>'}</td></tr>`;
+  }).join("");
+
+  document.getElementById("top-tbody").innerHTML=filteredTop().map((r,i)=>
+    `<tr><td><span style="display:inline-block;width:24px;height:24px;line-height:24px;text-align:center;border-radius:50%;background:rgba(255,255,255,0.1);font-weight:600">${i+1}</span></td>
+    <td style="font-weight:500">${r.post}</td>
+    <td>${r.platform==="instagram"?'<span class="badge b-ig">Instagram</span>':'<span class="badge b-li">LinkedIn</span>'}</td>
+    <td>${r.eng.toLocaleString()}</td><td>${r.clicks.toLocaleString()}</td>
+    <td>${r.type.includes("Paid")?'<span class="badge b-paid">'+r.type+'</span>':'<span class="badge b-org">'+r.type+'</span>'}</td></tr>`
+  ).join("");
+}
+
+function setupChips(id,setter){
+  document.getElementById(id).querySelectorAll(".chip").forEach(c=>{
+    c.addEventListener("click",()=>{
+      document.getElementById(id).querySelectorAll(".chip").forEach(x=>x.classList.remove("active"));
+      c.classList.add("active");setter(c.dataset.val);update();
+    });
+  });
+}
+setupChips("platform-chips",v=>selPlatform=v);
+setupChips("week-chips",v=>selWeek=v);
+setupChips("traffic-chips",v=>selTraffic=v);
+document.getElementById("reset-btn").addEventListener("click",()=>{
+  selPlatform="all";selWeek="all";selTraffic="all";
+  ["platform-chips","week-chips","traffic-chips"].forEach(id=>{
+    const cs=document.getElementById(id).querySelectorAll(".chip");
+    cs.forEach(c=>c.classList.remove("active"));cs[0].classList.add("active");
+  });
+  update();
+});
+update();
+</script>
+</body>
+</html>
